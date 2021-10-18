@@ -13,13 +13,13 @@ class DB:
         db_sess.close()
 
     def add_user(self, name: str, ip: str, priv_key: str, pub_key: str, pub_key_user: str) -> None:
-        """
+        """""
         name: Contact name
         ip: IPv4/v6 address of user
         priv_key: Private key of sender
         pub_key: Public key of sender
         pub_key_user: Public key of recipient
-        """
+        """""
         contact = User(name=name, ip=ip, hashed_private_key=priv_key, hashed_public_key=pub_key,
                        hashed_public_key_addr=pub_key_user)
         self.__add_model(contact)

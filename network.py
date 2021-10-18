@@ -11,4 +11,12 @@ class Server:
 
 
 class Client:
-    pass
+    def __init__(self, loop):
+        self.loop = loop
+
+    async def __open_connection(self):
+        return await asyncio.open_connection('127.0.0.1', 8888, loop=self.loop)
+
+    async def send(self, msg):
+        reader, writer = await self.__open_connection()
+        writer.write(msg)

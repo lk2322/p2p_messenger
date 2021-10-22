@@ -1,19 +1,12 @@
-import random
+from Crypto.PublicKey import RSA
 import time
-from threading import Thread
 
 
-class A:
-    def __init__(self):
-        self.a = [0]
+def keygen():
+    return RSA.generate(2048)
 
-a = [3]
-
-def foo():
-    a.append(random.random())
-
-AA = A()
-for i in range(5):
-    Thread(foo()).start()
-
-print(a)
+a = keygen()
+start = time.time_ns()
+print(a.export_key('DER'))
+print(a.public_key().export_key('DER'))
+print(time.time_ns() - start)

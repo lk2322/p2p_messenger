@@ -10,7 +10,6 @@ from db.dals.users_dal import UserDAL
 from rsa import Keys
 
 
-
 class Client:
     @classmethod
     async def create(cls, port) -> "Client":
@@ -60,19 +59,10 @@ class Server:
             pass  # TODO Обработка сообщений
 
 
-
-
-
 async def main():
     b = await Client.create(8888)
     a = await Server.create(8888, b)
     c = Keys()
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    async with async_session() as session:
-        async with session.begin():
-            book_dal = UserDAL(session)
-            await book_dal.create_user('asd', '123.1.2.1', b'asdadfsdf', b'asdasd', b'afsadfsdf')
     await b.send(b'a', "127.0.0.1")
     while True:
         await asyncio.sleep(0)

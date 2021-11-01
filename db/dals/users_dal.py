@@ -18,7 +18,6 @@ class UserDAL():
         self.db_session.add(new_user)
         await self.db_session.flush()
 
-    async def get_users(self, usr_id: int) -> List[Users]:
-        # TODO доделать
-        q = await self.db_session.query()
-        return q.scalars().first()
+    async def get_all_users(self) -> List[Users]:
+        q = await self.db_session.execute(select(Users).order_by(Users.id))
+        return q.scalars().all()

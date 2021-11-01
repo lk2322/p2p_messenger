@@ -63,7 +63,7 @@ async def main():
     b = await Client.create(8888)
     a = await Server.create(8888, b)
     c = Keys()
-    await b.send(b'a', "127.0.0.1")
+    await b.send(b'{}', "127.0.0.1")
     while True:
         await asyncio.sleep(0)
 

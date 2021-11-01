@@ -1,12 +1,33 @@
-from Crypto.PublicKey import RSA
-import time
+import asyncio
+import concurrent.futures
 
 
-def keygen():
-    return RSA.generate(2048)
+def cpu_bound():
+    # CPU-bound operations will block the event loop:
+    # in general it is preferable to run them in a
+    # process pool.
+    return sum(i * i for i in range(10 ** 7))
 
-a = keygen()
-start = time.time_ns()
-print(a.export_key('DER'))
-print(a.public_key().export_key('DER'))
-print(time.time_ns() - start)
+async def main():
+    loop = asyncio.get_running_loop()
+
+    ## Options:
+
+    # 1. Run in the default loop's executor:
+    result = await loop.run_in_executor(
+        None, cpu_bound)
+    print('default thread pool', result)
+
+    # 2. Run in a custom thread pool:
+    with concurrent.futures.ThreadPoolExecutor() as pool:
+        result = await loop.run_in_executor(
+            pool, cpu_bound)
+        print('custom thread pool', result)
+
+    # 3. Run in a custom process pool:
+    with concurrent.futures.ProcessPoolExecutor() as pool:
+        result = await loop.run_in_executor(
+            pool, cpu_bound)
+        print('custom process pool', result)
+
+asyncio.run(main())

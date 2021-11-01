@@ -1,16 +1,21 @@
-import asyncio
+from threading import Thread
 from typing import Tuple
 from Crypto.PublicKey import RSA
-from aiomisc import threaded, threaded_separate
+import asyncio
+
+
+def threaded(func):
+    def wrapper(*args):
+        th = Thread(target=func, args=args)
+        th.start()
+    return wrapper
 
 
 class Keys:
-
-    def __init__(self, len_stack: int = 3):
+    def __init__(self, len_stack:int = 3):
         self.keys = []
         for i in range(len_stack):
-            self.__keygen()
-
+            self.keygen()
     def get_keys(self) -> Tuple[bytes, bytes]:
         """
         Returns a key pair
@@ -20,15 +25,15 @@ class Keys:
         """
 
         keys = self.keys.pop()
-        self.__keygen()
+        self.keygen()
         return keys
 
     @threaded
-    def __keygen(self) -> None:
+    def keygen(self) -> None:
         """
         Generate a public / private key pair and writes it as a tuple in self.keys
         """
         key_obj = RSA.generate(2048)
-        key_priv = key_obj.export_key('DER')
-        key_pub = key_obj.public_key().export_key('DER')
+        key_priv = key_obj.export_key()
+        key_pub = key_obj.public_key().export_key()
         self.keys.append((key_priv, key_pub))

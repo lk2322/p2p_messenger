@@ -4,20 +4,20 @@ from typing import Tuple
 import json
 from logger import logger
 
-from db.config import async_session, engine, Base
-
-from db.dals.users_dal import UserDAL
+from db.config import engine, Base
 from rsa import Keys
 
 
 class Client:
     @classmethod
     async def create(cls, port) -> "Client":
-        return Client(port)
+        self = Client(port)
+        return self
 
     def __init__(self, port):
         self.port = port
         self.keys = Keys()
+        self.temp_addr = {}  # {addr: (name, priv_key, pub_key)}
 
     async def __open_connection(self, adr: str) -> Tuple[asyncio.StreamReader, asyncio.StreamWriter]:
         """
@@ -27,6 +27,14 @@ class Client:
         :return: (StreamReader, StreamWriter)
         """
         return await asyncio.open_connection(adr, self.port)
+
+    async def new_connection(self, addr, name):
+        keys = self.keys.get_keys()
+        msg = {'new_connection':
+                   {'pub_key': keys[1]}
+               }
+        self.temp_addr[addr] = (name, keys[0], keys[1])
+        await self.send(bytes(json.dumps(msg)), addr)
 
     async def send(self, msg, adr):
         reader, writer = await self.__open_connection(adr)
@@ -62,11 +70,13 @@ class Server:
 async def main():
     b = await Client.create(8888)
     a = await Server.create(8888, b)
-    c = Keys()
     await b.send(b'{}', "127.0.0.1")
     while True:
-        await asyncio.sleep(0)
+        await asyncio.sleep(0.1)
 
 
 if __name__ == '__main__':
+    # Fucking windows ProactorEventLoop
+    # I spent 4 hours figuring out what the problem is and fixing it
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
     asyncio.run(main())

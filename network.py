@@ -1,10 +1,12 @@
 import asyncio
+import sys
 import time
 from typing import Tuple
 import json
 from logger import logger
 
 from db.config import engine, Base
+from network_packets import Packet
 from rsa import Keys
 
 
@@ -30,12 +32,9 @@ class Client:
 
     async def new_connection(self, addr, name):
         keys = self.keys.get_keys()
-        msg = {
-            'new_connection':
-                {'pub_key': keys[1]}
-               }
         self.temp_addr[addr] = (name, keys[0], keys[1])
-        await self.send(bytes(json.dumps(msg)), addr)
+        data = Packet('NKEY', keys[1]).build()
+        await self.send(data, addr)
 
     async def send(self, msg, adr):
         reader, writer = await self.__open_connection(adr)
@@ -79,5 +78,6 @@ async def main():
 if __name__ == '__main__':
     # Fucking windows ProactorEventLoop
     # I spent 4 hours figuring out what the problem is and fixing it
-    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+    if sys.platform == 'win32':
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
     asyncio.run(main())

@@ -23,6 +23,7 @@ class Keys:
         Returns a key pair
 
         Raise IndexError if the keys did not have time to be created
+
         :return: Tuple(Private key, Public key)
         """
 

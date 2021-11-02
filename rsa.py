@@ -8,14 +8,16 @@ def threaded(func):
     def wrapper(*args):
         th = Thread(target=func, args=args)
         th.start()
+
     return wrapper
 
 
 class Keys:
-    def __init__(self, len_stack:int = 3):
+    def __init__(self, len_stack: int = 3):
         self.keys = []
         for i in range(len_stack):
             self.keygen()
+
     def get_keys(self) -> Tuple[bytes, bytes]:
         """
         Returns a key pair

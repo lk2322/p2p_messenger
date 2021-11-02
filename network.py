@@ -30,8 +30,9 @@ class Client:
 
     async def new_connection(self, addr, name):
         keys = self.keys.get_keys()
-        msg = {'new_connection':
-                   {'pub_key': keys[1]}
+        msg = {
+            'new_connection':
+                {'pub_key': keys[1]}
                }
         self.temp_addr[addr] = (name, keys[0], keys[1])
         await self.send(bytes(json.dumps(msg)), addr)

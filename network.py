@@ -1,12 +1,14 @@
 import asyncio
+import hashlib
+import struct
 import sys
 import time
 from typing import Tuple
 import json
 from logger import logger
-
+from db import get_dals
 from db.config import engine, Base
-from network_packets import Packet
+from network_packets import Packet, unpack_packet
 from rsa import Keys
 
 
@@ -30,47 +32,82 @@ class Client:
         """
         return await asyncio.open_connection(adr, self.port)
 
-    async def new_connection(self, addr, name):
+    async def new_connection(self, addr, name, save_db=False, priv_key: bytes = None):
+        """
+
+        :param addr:
+        :param name:
+        :param save_db: Save to database (you must specify the user's private key)
+        :param priv_key:
+        :return:
+        """
         keys = self.keys.get_keys()
-        self.temp_addr[addr] = (name, keys[0], keys[1])
+        if save_db:
+            # TODO When the interface is ready, send a new user there
+            dal = await get_dals.get_user_dal()
+            await dal.create_user(name, addr, keys[0], keys[1], priv_key)
+        else:
+            self.temp_addr[addr] = (name, keys[0], keys[1])
         data = Packet('NKEY', keys[1]).build()
         await self.send(data, addr)
 
-    async def send(self, msg, adr):
-        reader, writer = await self.__open_connection(adr)
+    async def send(self, msg: bytes, addr: str):
+        reader, writer = await self.__open_connection(addr)
         writer.write(msg)
         await writer.drain()
         writer.close()
 
 
 class Server:
+    client: Client
+
     @classmethod
     async def create(cls, port: int, client: Client) -> "Server":
         self = Server()
-        self.__server = await asyncio.start_server(self.__handle_msg, '0.0.0.0', port)
+        self.__server = await asyncio.start_server(self.__handle_data, '0.0.0.0', port)
         self.client = client
         return self
 
-    async def __handle_msg(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter):
+    async def __handle_data(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter):
         data = await reader.read(-1)
-        decoded_data = data.decode()
         addr = writer.get_extra_info('peername')[0]
-        logger.info(f"From {addr}: Get new message")
+        logger.info(f'From {addr}: Get new message')
         try:
-            msg: dict = json.loads(decoded_data)
-        except json.JSONDecodeError:
-            logger.error(f"From {addr}: Error decoding json from message")
+            data = unpack_packet(data)
+        except struct.error:
+            logger.error(f'From {addr}: Error while trying to unpack the message')
             return
-        if msg.get('new_connection'):
-            pass  # TODO Создание нового соединения
-        if msg.get("message"):
-            pass  # TODO Обработка сообщений
+        cmd, content_hash, _, content = data
+        if cmd == b'NKEY':
+            await self.__handle_new_conn(addr, content, content_hash)
+        elif cmd == b'MESG':
+            pass
+        else:
+            logger.error(f'From {addr}: Unknown cmd')
+
+    async def __handle_new_conn(self, addr, content: bytes, c_hash: bytes):
+        # Conditional check, because the hash can also be replaced
+        if hashlib.sha256(content).digest() != c_hash:
+            logger.error(f'From {addr}: Wrong hash')
+            return
+        if addr in self.client.temp_addr:
+            dal = await get_dals.get_user_dal()
+            user_info = self.client.temp_addr[addr]
+            await dal.create_user(user_info[0], addr, user_info[1], user_info[2], content)
+            logger.debug(f"Added new user in db {addr, user_info[0]}")
+            return
+        else:
+            # How about adding a connection request?
+            await self.client.new_connection(addr, addr, True, content)
 
 
 async def main():
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
     b = await Client.create(8888)
     a = await Server.create(8888, b)
-    await b.send(b'{}', "127.0.0.1")
+    await asyncio.sleep(3)
+    # await b.send(b'NKEYo\xe6\x02\x1f\x94\x8f#\xa3x\xd38\xe5\xaa\xe0H\xb0[\xbf*ya\x01\xe6\xe5\xb1\x0c\xf1]\xd0\x91z*\x00\x08asdfsadf', "127.0.0.1")
     while True:
         await asyncio.sleep(0.1)
 

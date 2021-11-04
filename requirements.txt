@@ -1,3 +1,5 @@
 SQLAlchemy>=1.4.23
 pycryptodome
 aiosqlite
+sqlalchemy-utils
+passlib

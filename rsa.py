@@ -1,7 +1,6 @@
 from threading import Thread
 from typing import Tuple
 from Crypto.PublicKey import RSA
-import asyncio
 
 
 def threaded(func):
@@ -37,6 +36,6 @@ class Keys:
         Generate a public / private key pair and writes it as a tuple in self.keys
         """
         key_obj = RSA.generate(2048)
-        key_priv = key_obj.export_key()
-        key_pub = key_obj.public_key().export_key()
+        key_priv = key_obj.export_key('DER')
+        key_pub = key_obj.public_key().export_key('DER')
         self.keys.append((key_priv, key_pub))

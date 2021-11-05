@@ -107,7 +107,6 @@ async def main():
     b = await Client.create(8888)
     a = await Server.create(8888, b)
     await asyncio.sleep(3)
-    # await b.send(b'NKEYo\xe6\x02\x1f\x94\x8f#\xa3x\xd38\xe5\xaa\xe0H\xb0[\xbf*ya\x01\xe6\xe5\xb1\x0c\xf1]\xd0\x91z*\x00\x08asdfsadf', "127.0.0.1")
     while True:
         await asyncio.sleep(0.1)
 

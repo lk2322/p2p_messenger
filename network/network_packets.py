@@ -8,7 +8,7 @@ FMT = '!4s32sH'
 class Packet:
     def __init__(self, cmd: str, content: Union[str, bytes]):
         """
-        :param cmd:  MESG or NKEY only
+        :param cmd:  MESG, NKEY, PING only
         :param content:
         """
         self.cmd = bytes(cmd, 'utf-8')
@@ -17,7 +17,6 @@ class Packet:
         else:
             self.content = bytes(content, 'utf-8')
         self.length = len(self.content)
-        # FIXME сделать хаш ДО шифрования сообщений
         self.id = hashlib.sha256(self.content).digest()
 
     def build(self):

@@ -1,4 +1,4 @@
-module p2p_chat
+module github.com/lk2322/p2p_messenger
 
 go 1.20
 

@@ -2,11 +2,11 @@ package main
 
 import (
 	"github.com/gdamore/tcell/v2"
+	"github.com/lk2322/p2p_messenger/network"
 	"github.com/rivo/tview"
 	"log"
 	"net"
 	"os"
-	"p2p_chat/network"
 	"time"
 )
 
